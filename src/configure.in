@@ -1,0 +1,24 @@
+AC_INIT([exwise],[0.1],[lcid-fire@gmx.net])
+AC_CONFIG_AUX_DIR(config)
+AC_CANONICAL_TARGET
+AC_CANONICAL_HOST
+AC_CANONICAL_SYSTEM
+AM_INIT_AUTOMAKE([-Wall foreign dist-bzip2])
+
+AC_PROG_CC
+if test "$CC" = :; then
+  AC_MSG_ERROR([This package needs a C compiler.])
+fi
+AC_LIBTOOL_DLOPEN
+AM_PROG_LIBTOOL
+
+dnl Stolen from gcc, set CC_FOR_BUILD right so we build host tools with host compiler
+if test "${build}" != "${host}" ; then
+  CC_FOR_BUILD=${CC_FOR_BUILD-gcc}
+else
+  CC_FOR_BUILD="${CC}"
+fi
+AC_SUBST(CC_FOR_BUILD)
+
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
