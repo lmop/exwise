@@ -20,5 +20,5 @@ else
 fi
 AC_SUBST(CC_FOR_BUILD)
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
