@@ -5,7 +5,9 @@
    portions based on Info-ZIP v5.31 (see file "Copying")
 */
 
+#ifndef VERSION
 #define VERSION "v1.0"
+#endif
 
 /* original funzip.c header */
 /* You can do whatever you like with this source file, though I would
@@ -81,8 +83,9 @@
  */
 
 
-
-#define FUNZIP
+#ifndef FUNZIP
+#define FUNZIP //make sure FUNZIP is defined afterwards
+#endif
 #define UNZIP_INTERNAL
 #include "unzip.h"
 #include "crypt.h"
