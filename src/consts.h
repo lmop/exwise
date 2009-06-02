@@ -6,7 +6,10 @@
   included by unzip.c and windll/dllsetup.c.
 
   ---------------------------------------------------------------------------*/
+#ifndef CONSTS_H
+#define CONSTS_H
 
+#include "version.h"
 
 /* And'ing with mask_bits[n] masks the lower n bits */
 ZCONST ush near mask_bits[] = {
@@ -44,3 +47,5 @@ char Far ExclFilenameNotMatched[] =
   char Far Zipnfo[] = "zipinfo";
   char Far CompiledWith[] = "Compiled with %s%s for %s%s%s%s.\n\n";
 #endif
+
+#endif //CONSTS_H
