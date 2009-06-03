@@ -213,58 +213,6 @@ static int checkTable[][2] = {{0x3114, 0x3780},
 			      {0x3150, 0x37d0},
 			      {0x2988, 0x3000},
 			      {-1, -1}};
-enum exe_type
-{
-	NE,
-	PE
-};
-
-typedef int bool;
-
-struct wise_format
-{
-	enum exe_type type; //NE | PE
-	size_t exec_length; //length of executable part
-	bool has_dll_name; 
-	size_t header_size;
-	int archive_size_offset; //offset of archive size field | -1
-	bool has_text_strings;
-	int filename_offset;     //offset of filename in archive information file | -1
-	size_t exe_code_size;
-	size_t exe_data_size;
-	bool crc_present;
-};
-
-static struct wise_format wise_formats[] =
-{
-//NE
-	{NE, 0x84b0, FALSE, 0x11, -1,   FALSE, 0x04, 0,      0,      FALSE},
-	{NE, 0x3e10, FALSE, 0x1e, -1,   FALSE, 0x04, 0,      0,      TRUE },
-	{NE, 0x3e50, FALSE, 0x1e, -1,   FALSE, 0x04, 0,      0,      TRUE },
-	{NE, 0x3c20, FALSE, 0x1e, -1,   FALSE, 0x04, 0,      0,      TRUE },
-	{NE, 0x3c30, FALSE, 0x22, -1,   FALSE, 0x04, 0,      0,      TRUE },
-	{NE, 0x3660, FALSE, 0x40, 0x3c, FALSE, 0x04, 0,      0,      TRUE },
-	{NE, 0x36f0, FALSE, 0x48, 0x44, FALSE, 0x1c, 0,      0,      TRUE }, 
-	{NE, 0x3770, FALSE, 0x50, 0x4c, FALSE, 0x1c, 0,      0,      TRUE },
-	{NE, 0x3780, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0,      0,      TRUE },
-	{NE, 0x37b0, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0,      0,      TRUE },
-	{NE, 0x37d0, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0,      0,      TRUE },
-	{NE, 0x3c80, TRUE,  0x5a, 0x4c, TRUE,  0x1c, 0,      0,      TRUE },
-	{NE, 0x3bd0, TRUE,  0x5a, 0x4c, TRUE,  0x1c, 0,      0,      TRUE },
-	{NE, 0x3c10, TRUE,  0x5a, 0x4c, TRUE,  0x1c, 0,      0,      TRUE },
-//PE
-	{PE, 0x6e00, FALSE, 0x50, 0x4c, FALSE, 0x1c, 0x3cf4, 0x1528, TRUE },
-	{PE, 0x6e00, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0x3cf4, 0x1568, TRUE },
-	{PE, 0x6e00, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0x3d54, 0,      TRUE },
-	{PE, 0x6e00, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0x3d44, 0,      TRUE },
-	{PE, 0x6e00, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0x3d04, 0,      TRUE },
-	{PE, 0x3000, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0,      0,      TRUE },
-	{PE, 0x3800, TRUE,  0x5a, 0x4c, TRUE,  0x1c, 0,      0,      TRUE },
-	{PE, 0x3a00, TRUE,  0x5a, 0x4c, TRUE,  0x1c, 0,      0,      TRUE }
-};
-
-
-
 
 // flags
 int pkZipMode = 0;

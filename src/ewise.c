@@ -122,40 +122,55 @@ const
   rechnungs_null        :longint=0;
   rechnungs_null_bekannt:boolean=false;
 
-{**********************************************************************
-  bekannte_formate      :array[1..22] of format_eigenschaften=
-    ((exe_typ:exe_ne; exe_laenge:$84b0; dll:false; archivstart:$11; ae_pos: -1; init_text:false; pos_dateiname:$04 ;l_code:   -1 ;l_data:   -1 ;kein_crc:true ),
-     (exe_typ:exe_ne; exe_laenge:$3e10; dll:false; archivstart:$1e; ae_pos: -1; init_text:false; pos_dateiname:$04 ;l_code:   -1 ;l_data:   -1 ;kein_crc:false),
-     (exe_typ:exe_ne; exe_laenge:$3e50; dll:false; archivstart:$1e; ae_pos: -1; init_text:false; pos_dateiname:$04 ;l_code:   -1 ;l_data:   -1 ;kein_crc:false),
-     (exe_typ:exe_ne; exe_laenge:$3c20; dll:false; archivstart:$1e; ae_pos: -1; init_text:false; pos_dateiname:$04 ;l_code:   -1 ;l_data:   -1 ;kein_crc:false),
-     (exe_typ:exe_ne; exe_laenge:$3c30; dll:false; archivstart:$22; ae_pos: -1; init_text:false; pos_dateiname:$04 ;l_code:   -1 ;l_data:   -1 ;kein_crc:false), (* 4.X  - 19960528 *)
-     (exe_typ:exe_ne; exe_laenge:$3660; dll:false; archivstart:$40; ae_pos:$3c; init_text:false; pos_dateiname:$04 ;l_code:   -1 ;l_data:   -1 ;kein_crc:false),
-     (exe_typ:exe_ne; exe_laenge:$36f0; dll:false; archivstart:$48; ae_pos:$44; init_text:false; pos_dateiname:$1c ;l_code:   -1 ;l_data:   -1 ;kein_crc:false),
-     (exe_typ:exe_ne; exe_laenge:$3770; dll:false; archivstart:$50; ae_pos:$4c; init_text:false; pos_dateiname:$1c ;l_code:   -1 ;l_data:   -1 ;kein_crc:false),
-     (exe_typ:exe_ne; exe_laenge:$3780; dll:true ; archivstart:$50; ae_pos:$4c; init_text:false; pos_dateiname:$1c ;l_code:   -1 ;l_data:   -1 ;kein_crc:false), (* 6.01 - 19980323 *)
-     (exe_typ:exe_ne; exe_laenge:$37b0; dll:true ; archivstart:$50; ae_pos:$4c; init_text:false; pos_dateiname:$1c ;l_code:   -1 ;l_data:   -1 ;kein_crc:false),
-     (exe_typ:exe_ne; exe_laenge:$37d0; dll:true ; archivstart:$50; ae_pos:$4c; init_text:false; pos_dateiname:$1c ;l_code:   -1 ;l_data:   -1 ;kein_crc:false), (* 5.X  - 19970620 *)
-     (exe_typ:exe_ne; exe_laenge:$3c80; dll:true ; archivstart:$5a; ae_pos:$4c; init_text:true ; pos_dateiname:$1c ;l_code:   -1 ;l_data:   -1 ;kein_crc:false),
-     (exe_typ:exe_ne; exe_laenge:$3bd0; dll:true ; archivstart:$5a; ae_pos:$4c; init_text:true ; pos_dateiname:$1c ;l_code:   -1 ;l_data:   -1 ;kein_crc:false),
-     (exe_typ:exe_ne; exe_laenge:$3c10; dll:true ; archivstart:$5a; ae_pos:$4c; init_text:true ; pos_dateiname:$1c ;l_code:   -1 ;l_data:   -1 ;kein_crc:false),
+enum exe_type
+{
+	NE,
+	PE
+};
 
-     (exe_typ:exe_pe; exe_laenge:$6e00; dll:false; archivstart:$50; ae_pos:$4c; init_text:false; pos_dateiname:$1c ;l_code:$3cf4 ;l_data:$1528 ;kein_crc:false), (* pbupdate.exe *)
-     (exe_typ:exe_pe; exe_laenge:$6e00; dll:true ; archivstart:$50; ae_pos:$4c; init_text:false; pos_dateiname:$1c ;l_code:$3cf4 ;l_data:$1568 ;kein_crc:false), (* MailTalkX.exe *)
-     (exe_typ:exe_pe; exe_laenge:$6e00; dll:true ; archivstart:$50; ae_pos:$4c; init_text:false; pos_dateiname:$1c ;l_code:$3d54 ;l_data:   -1 ;kein_crc:false),
-     (exe_typ:exe_pe; exe_laenge:$6e00; dll:true ; archivstart:$50; ae_pos:$4c; init_text:false; pos_dateiname:$1c ;l_code:$3d44 ;l_data:   -1 ;kein_crc:false), (* 5.X  - 19970616 *)
-     (exe_typ:exe_pe; exe_laenge:$6e00; dll:true ; archivstart:$50; ae_pos:$4c; init_text:false; pos_dateiname:$1c ;l_code:$3d04 ;l_data:   -1 ;kein_crc:false),
-     (exe_typ:exe_pe; exe_laenge:$3000; dll:true ; archivstart:$50; ae_pos:$4c; init_text:false; pos_dateiname:$1c ;l_code:   -1 ;l_data:   -1 ;kein_crc:false), (* 6.01 - 19980323 *)
-     (exe_typ:exe_pe; exe_laenge:$3800; dll:true ; archivstart:$5a; ae_pos:$4c; init_text:true ; pos_dateiname:$1c ;l_code:   -1 ;l_data:   -1 ;kein_crc:false),
-     (exe_typ:exe_pe; exe_laenge:$3a00; dll:true ; archivstart:$5a; ae_pos:$4c; init_text:true ; pos_dateiname:$1c ;l_code:   -1 ;l_data:   -1 ;kein_crc:false));
-**********************************************************************}
+struct wise_format
+{
+	enum exe_type type; //NE | PE
+	size_t exec_length; //length of executable part
+	gboolean has_dll_name; 
+	size_t header_size;
+	int archive_size_offset; //offset of archive size field | -1
+	gboolean has_text_strings;
+	int filename_offset;     //offset of filename in archive information file | -1
+	size_t exe_code_size;
+	size_t exe_data_size;
+	gboolean crc_present;
+};
 
-  (*$IFDEF LINUX*)
-  Pfadtrennzeichen='/';
-  (*$ELSE*)
-  Pfadtrennzeichen='\';
-  (*$ENDIF*)
+static struct wise_format wise_formats[] =
+{
+//NE
+	{NE, 0x84b0, FALSE, 0x11, -1,   FALSE, 0x04, 0,      0,      FALSE},
+	{NE, 0x3e10, FALSE, 0x1e, -1,   FALSE, 0x04, 0,      0,      TRUE },
+	{NE, 0x3e50, FALSE, 0x1e, -1,   FALSE, 0x04, 0,      0,      TRUE },
+	{NE, 0x3c20, FALSE, 0x1e, -1,   FALSE, 0x04, 0,      0,      TRUE },
+	{NE, 0x3c30, FALSE, 0x22, -1,   FALSE, 0x04, 0,      0,      TRUE },
+	{NE, 0x3660, FALSE, 0x40, 0x3c, FALSE, 0x04, 0,      0,      TRUE },
+	{NE, 0x36f0, FALSE, 0x48, 0x44, FALSE, 0x1c, 0,      0,      TRUE }, 
+	{NE, 0x3770, FALSE, 0x50, 0x4c, FALSE, 0x1c, 0,      0,      TRUE },
+	{NE, 0x3780, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0,      0,      TRUE },
+	{NE, 0x37b0, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0,      0,      TRUE },
+	{NE, 0x37d0, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0,      0,      TRUE },
+	{NE, 0x3c80, TRUE,  0x5a, 0x4c, TRUE,  0x1c, 0,      0,      TRUE },
+	{NE, 0x3bd0, TRUE,  0x5a, 0x4c, TRUE,  0x1c, 0,      0,      TRUE },
+	{NE, 0x3c10, TRUE,  0x5a, 0x4c, TRUE,  0x1c, 0,      0,      TRUE },
+//PE
+	{PE, 0x6e00, FALSE, 0x50, 0x4c, FALSE, 0x1c, 0x3cf4, 0x1528, TRUE },
+	{PE, 0x6e00, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0x3cf4, 0x1568, TRUE },
+	{PE, 0x6e00, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0x3d54, 0,      TRUE },
+	{PE, 0x6e00, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0x3d44, 0,      TRUE },
+	{PE, 0x6e00, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0x3d04, 0,      TRUE },
+	{PE, 0x3000, TRUE,  0x50, 0x4c, FALSE, 0x1c, 0,      0,      TRUE },
+	{PE, 0x3800, TRUE,  0x5a, 0x4c, TRUE,  0x1c, 0,      0,      TRUE },
+	{PE, 0x3a00, TRUE,  0x5a, 0x4c, TRUE,  0x1c, 0,      0,      TRUE }
+};
 
-
+/*
 procedure obj_fehlerbehandlung(const f:longint);
   begin
     if f=stOk then exit;
@@ -176,7 +191,7 @@ procedure obj_fehlerbehandlung(const f:longint);
     end;
     RunError(f);
   end;
-
+*/
 
 procedure d1_Read(var p;const anzahl:longint);
   begin
@@ -187,11 +202,13 @@ procedure d1_Read(var p;const anzahl:longint);
     obj_fehlerbehandlung(d1^.Status);
   end;
 
+/*
 procedure d1_Seek(const position:longint);
   begin
     d1^.Seek(position);
     obj_fehlerbehandlung(d1^.Status);
   end;
+*/
 
 function  d1_GetPos:longint;
   begin
