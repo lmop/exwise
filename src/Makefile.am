@@ -1,3 +1,4 @@
 bin_PROGRAMS = exwise
-exwise_SOURCES = crc32.c crypt.c exwise.c globals.c inflate.c ttyio.c
-exwise_CFLAGS = -DFUNZIP -DUNIX $(AM_CFLAGS)
+exwise_SOURCES = ewise.c
+exwise_CFLAGS = `pkg-config --cflags glib-2.0`
+exwise_LDFLAGS = `pkg-config --libs glib-2.0`
