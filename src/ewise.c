@@ -1,16 +1,17 @@
+#include <glib.h>
 {&Use32-}
 program E_WISE;
 
 (* 1999.12.18 Veit Kannegieser mit inflate-pascal.zip/DumPING als Grundlage *)
 (* 1999.12.19..2000.02.06 Erstversion aus e_lc10                            *)
-(* 2000.02.11 NE/$3e10 hinzugefgt                                          *)
-(* 2000.02.18 NE/$3bd0 und NE/$3c10 hinzugefgt                             *)
-(* 2000.02.28 Untersttzung fr selbstauspackende Selbstauspacker ...       *)
+(* 2000.02.11 NE/$3e10 hinzugefgt                                          *)
+(* 2000.02.18 NE/$3bd0 und NE/$3c10 hinzugefgt                             *)
+(* 2000.02.28 Untersttzung fr selbstauspackende Selbstauspacker ...       *)
 (*            Verbesserte Dateinamenerkennung                               *)
 (* 2000.03.01 Problem mit PE_0FEC:PE_6E00 behoben (Relokationen wurden      *)
 (*            nicht mitgerechnet)                                           *)
-(* 2000.08.21 NE/$3770 hinzugefgt,stOpen->stOpenRead                       *)
-(* 2000.10.12 Behandlung von Nullen in der letzten Datei ge„ndert           *)
+(* 2000.08.21 NE/$3770 hinzugefgt,stOpen->stOpenRead                       *)
+(* 2000.10.12 Behandlung von Nullen in der letzten Datei gendert           *)
 (* 2000.12.08 -                                                             *)
 (* 2001.05.21 PE/$6e00/$3cf4 -> ../$1528 und ../$1568                       *)
 (* 2002.02.11 NE/$84b0, Debugmodus                                          *)
@@ -60,7 +61,7 @@ type
       archivstart       :longint;
       laenge_eingepackt :longint;
       dateilaenge       :longint;
-      dateilaenge_2     :longint; (* zur Anzeige ?/in der šbersichttsdatei verwendet *)
+      dateilaenge_2     :longint; (* zur Anzeige ?/in der bersichttsdatei verwendet *)
       anfang            :array[0..400] of byte;
       dateiname         :string;
     end;
@@ -70,31 +71,15 @@ type
   PLongint              =^longint;
   PWord                 =^smallword;
 
-  exe_typ_typ           =(exe_unbekannt,exe_ne,exe_pe);
-
-  format_eigenschaften=
-    record
-      exe_typ           :exe_typ_typ;
-      exe_laenge        :longint;
-      dll               :boolean;
-      archivstart       :longint;
-      ae_pos            :longint; (* Position im Archivkopf des Archivendes *)
-      init_text         :boolean;
-      pos_dateiname     :longint;
-      l_code            :longint; (* setup_programmcode_laenge *)
-      l_data            :longint;
-      kein_crc          :boolean;
-    end;
-
-  bekannte_formate_typ  =array[1..1000] of format_eigenschaften;
-
 var
   d1,d2                 :pBufStream;
   d3                    :file;
   d1_laenge             :longint;
   crc                   :tCRC;
+  /*
   datenbasis            :longint;
   datenstart            :longint;
+  */
   archivende            :longint;
   archivende_geladen    :longint;
   datei_tabelle         :^datei_tabelle_typ;
@@ -235,13 +220,12 @@ function dname(const n:longint):string;
     dname:=Int2StrZ(n,8)+'.EWI';
   end;
 
-procedure springe_zu_den_daten;
-
-  var
-    exe_kopf            :exe_hdr;
-    nochmal_ende_suchen :boolean;
-
-  procedure uebergehe_ne;
+/*
+procedure uebergehe_ne;
+*/
+GError* skip_ne(GIOChannel* input)
+{
+/*
     var
       ne                :new_exe;
       rs_align          :smallword;
@@ -252,7 +236,8 @@ procedure springe_zu_den_daten;
       o                 :longint;
       codeseginfo,
       datenseginfo      :new_seg;
-    begin
+*/
+
       d1_Seek(datenbasis+datenstart);
       d1_Read(ne,SizeOf(ne));
       o:=datenstart;
@@ -269,7 +254,7 @@ procedure springe_zu_den_daten;
       (* Annahme: es sind Resourcen vorhanden und sie sind am Ende.. *)
       d1_Seek(datenbasis+datenstart+ne.ne_rsrctab);
       d1_Read(rs_align,SizeOf(rs_align));
-      (* ne.ne_cres ist 0 also muá geschummelt werden *)
+      (* ne.ne_cres ist 0 also mu geschummelt werden *)
       while d1_GetPos+SizeOf(rs_type)<=datenbasis+datenstart+ne.ne_restab do
         begin
           d1_Read(rs_type,SizeOf(rs_type));
@@ -285,9 +270,14 @@ procedure springe_zu_den_daten;
 
       datenstart:=o;
       gefundene_exe:=exe_ne;
-    end;
+}
 
-  procedure uebergehe_pe;
+/*
+procedure uebergehe_pe;
+*/
+GError* skip_pe(GIOChannel* input, gint64 base, gint64 start)
+{
+/*
     var
       im                :TImageFileHeader;
       imo               :TImageOptionalHeader;
@@ -297,21 +287,91 @@ procedure springe_zu_den_daten;
       resource_sektion  :longint;
     type
       exe_hdr_z         =^exe_hdr;
-    begin
+*/
+	GError* error = NULL;
+/*
       d1_Seek(datenbasis+datenstart+4);
+      */
+      	status = g_io_channel_seek_position
+		(
+			input, base + start + 4,
+			G_SEEK_SET,	&error
+		);
+		
+		if(error)
+			return error;
+/*
       d1_Read(im,SizeOf(im));
+*/
+		status = g_io_channel_read_chars
+		(
+			input, ???, ????,
+			&bytes_read, &error
+		);
+		
+		if(error)
+			return error;
+/*
       d1_Read(imo,SizeOf(imo));
+*/
 
-      (* Informationen ber die erste Sektioen (.text) einlesen *)
+		status = g_io_channel_read_chars
+		(
+			input, ???, ????,
+			&bytes_read, &error
+		);
+		
+		if(error)
+			return error;
+/*
+      (* Informationen ber die erste Sektioen (.text) einlesen *)
       d1_Seek(datenbasis+datenstart+4+SizeOf(im)+im.SizeOfOptionalHeader);
+*/
+		//read information about the first sector (.text)
+      	status = g_io_channel_seek_position
+		(
+			input, base + start + 4 + ???, G_SEEK_SET, &error
+		);
+		
+		if(error)
+			return error;
+/*
       d1_Read(sek,SizeOf(sek));
+*/
+		status = g_io_channel_read_chars
+		(
+			input, ???, ????, &bytes_read, &error
+		);
+		
+		if(error)
+			return error;
+/*
       setup_programmcode_laenge:=sek.Misc.VirtualSize;
 
       d1_Seek(datenbasis+datenstart+4+SizeOf(im)+im.SizeOfOptionalHeader+2*SizeOf(sek));
+*/
+      	status = g_io_channel_seek_position
+		(
+			input, base + start + 4 + ???, G_SEEK_SET, &error
+		);
+		
+		if(error)
+			return error;
+/*
       d1_Read(sek,SizeOf(sek));
       setup_programmdaten_laenge:=sek.Misc.VirtualSize;
-
-      (* Informationen ber letzte Sektion (Resource..) einlesen *)
+*/
+		status = g_io_channel_read_chars
+		(
+			input, ???, ????, &bytes_read, &error
+		);
+		
+		if(error)
+			return error;
+/*
+      (* Informationen áber letzte Sektion (Resource..) einlesen *)
+*/
+		//read information about last section (Resource..)
       resource_sektion:=im.NumberOfSections-1;
       if (im.Characteristics and (1 shl 0))=0 then
         Dec(resource_sektion); (* relo *)
@@ -335,7 +395,7 @@ procedure springe_zu_den_daten;
                 begin
                   datenstart:=sek.PointerToRawData+f;
                   archivende:=datenbasis+sek.PointerToRawData+imo.DataDirectory[image_Directory_Entry_Resource].Size;
-                  nochmal_ende_suchen:=true;
+                  search_finished = FALSE;
                   Exit;
                 end
               else
@@ -348,41 +408,124 @@ procedure springe_zu_den_daten;
 
       datenstart:=sek.PointerToRawData+sek.SizeOfRawData;
       gefundene_exe:=exe_pe;
-    end;
+}
+/*
+procedure springe_zu_den_daten;
+*/
+GError* skip_to_data(GIOChannel* input)
+{
+/*
+  var
+    exe_kopf            :exe_hdr;
+    nochmal_ende_suchen :boolean;
 
-  begin
     datenbasis:=0;
     datenstart:=0;
+*/
+	const gint64 base = 0;
+	gint64 start;
+	
     setup_programmcode_laenge:=0;
+	gboolean search_finished;
+	
+	GError* error = NULL; 
+	GIOStatus status;
+	gchar* buffer = NULL;
+	gsize* bytes_read = NULL;
+	
+	do
+    {
+		search_finished = TRUE;
 
-    repeat
-
-      nochmal_ende_suchen:=false;
+#warning WHAT THE Â§$%& does this do?
+/*		
       Inc(datenbasis,datenstart);
-      datenstart:=0;
+*/
+      start = 0;
 
       gefundene_exe:=exe_unbekannt;
+/*
       d1_Seek(datenbasis+datenstart);
+*/
+		status = g_io_channel_seek_position
+		(
+			input, base + start,
+			G_SEEK_SET,	&error
+		);
+		
+		if(error)
+			return error;
+/*
       d1_Read(exe_kopf,SizeOf(exe_kopf));
-
-      if ((exe_kopf.e_magic=ExeId) or (exe_kopf.e_magic=$4d5a))
+*/
+		status = g_io_channel_read_chars
+		(
+			input, ???, ????,
+			&bytes_read, &error
+		);
+		
+		if(error)
+			return error;
+/*
+      if ((exe_kopf.e_magic=ExeId) or (exe_kopf.e_magic=0x4d5a))
       and (exe_kopf.e_cparhdr>=4)
-      and (exe_kopf.e_lfanew>=$40)
+      and (exe_kopf.e_lfanew>=0x40)
        then
-        begin
+*/
+		if
+		(
+			((header_get_magic(header) = ExeId) || (header_get_magic(header) = 0x4d5a))
+			&& (header_get_cparhdr(header) >= 4)
+			&& (header_get_lfanew(header) >= 0x40)
+		)
+		{
+/*	
           datenstart:=exe_kopf.e_lfanew;
+*/
+			start = header_get_lfanew(header);
+			
+/*
           d1_Seek(datenbasis+datenstart);
+*/
+			status = g_io_channel_seek_position
+			(
+				input, base + start,
+				G_SEEK_SET,	&error
+			);
+			
+			if(error)
+				return error;
+/*
           d1_Read(exe_kopf,SizeOf(exe_kopf));
-        end;
-
+*/
+          	status = g_io_channel_read_chars
+			(
+				input, ???, ???,
+				&bytes_read, &error
+			);
+			
+			if(error)
+				return error;
+		}
+/*
       case exe_kopf.e_magic of
         Ord('N')+Ord('E') shl 8:uebergehe_ne;
         Ord('P')+Ord('E') shl 8:uebergehe_pe;
       end;
-
-    until not nochmal_ende_suchen;
-
-  end;
+*/
+      	if(header_get_magic(header) == 'NE')
+      		skip_ne(input);
+      	else if(header_get_magic(header) == 'PE')
+      		skip_pe(input);
+      	else
+      	{
+      		//we're in trouble
+      		error = g_error_new(0, 0, "Magic is %0x - expected %0x%0x or %0x%0x", header_get_magic(header), 'N', 'P', 'P', 'E');
+      		return error; 
+      	}
+    }
+    while(search_finished);
+}
 
 procedure GoBackInSource_(w:Word);
   begin
@@ -461,6 +604,8 @@ var
   datei_zeile           :string;
   verzeichnisanfang     :string;
 
+#warning implement external sources later
+/*
 procedure suche_informationsdatei;
   var
     w2                  :word;
@@ -503,6 +648,7 @@ procedure suche_informationsdatei;
     informationsdatei^.Done;
   end;
 
+
 procedure verarbeite_patchformat;
   var
     kopierpuffer:pByteArray;
@@ -519,7 +665,7 @@ procedure verarbeite_patchformat;
       if  (dateilaenge>=16)
       and (anfang[0] in [1..150]) then
         begin
-          (* Patchkopf+vollst„ndige Datei *)
+          (* Patchkopf+vollstndige Datei *)
           if  (Plongint(@anfang[9])^+anfang[0]*12+13=dateilaenge)
           and (Plongint(@anfang[$d])^=0) then
             begin
@@ -563,6 +709,7 @@ procedure verarbeite_patchformat;
             end;
         end;
   end;
+*/
 
 procedure berechne_aktuelle_rechnugsnull;
   var
@@ -624,6 +771,7 @@ procedure rate_naechstes_blockende(const jetzige_position:longint);
 
   end;
 
+/*
 procedure lade_datenbank;
   var
     pfad,dateiname,erweiterung,
@@ -709,33 +857,47 @@ procedure lade_datenbank;
         Halt(1);
       end;
   end;
+*/
+static gchar* unpack_directory = NULL;
+static gchar** files_to_extract = NULL;
+static gchar** wise_archive = NULL;
 
-begin
-  WriteLn('ð E_WISE * WISE SETUP ',textz_Entpacker^,' * Veit Kannegieser * ',datum);
+static gboolean enable_debug(const gchar *option_name, const gchar* value, gpointer data, GError **error)
+{
+	return TRUE;
+}
 
-  lade_datenbank;
+static GOptionEntry entries[] =
+{
+	{ "",                 '\0', 0,                          G_OPTION_ARG_FILENAME,       &wise_archive,     "Wise archive to unpack",   NULL},
+	{ "unpack_directory", 'd',  G_OPTION_FLAG_OPTIONAL_ARG, G_OPTION_ARG_STRING,         &unpack_directory, "Place to unpack files to", NULL},
+	{ "debug",            '\0', G_OPTION_FLAG_OPTIONAL_ARG, G_OPTION_ARG_CALLBACK,       enable_debug,      "Enable debug mode",        NULL},
+	{ "files",            '\0', 0,                          G_OPTION_ARG_FILENAME_ARRAY, files_to_extract,  "Narrows files to debug",   NULL}, 
+	{ NULL }
+};
 
-  if (ParamCount<>2) and (ParamCount<>3) then
-    begin
-      WriteLn(textz_benutztung^,': E_WISE <WISE-SETUP-EXE> <',textz_Zielverzeichnis^,'> [/DEBUG]');
-      Halt(1);
-    end;
 
-  quelldatei:=ParamStr(1);
-  (*$IFDEF DEBUG*)
-  quelldatei:='H:\daten.ty2\arc\wise\ne_3660\YDKJ\autoplay.exe';
-  quelldatei:='H:\daten.ty2\arc\wise\ne_36f0\PTOOLS\pt3_6de.exe';
-  quelldatei:='H:\daten.ty2\arc\wise\ne_3780\mglf405.exe';
-  quelldatei:='H:\daten.ty2\arc\wise\pe_3800\par149b.exe';
-  quelldatei:='H:\daten.ty2\arc\wise\pe_6e00\UPDATE32.ZIP\UPDATE32\update32.exe';
-  quelldatei:='H:\daten.ty2\arc\wise\ne_3660\YDKJ\autoplay.exe';
-  quelldatei:='K:\SETUP.EXE';
-  quelldatei:='H:\daten.ty2\arc\wise\0\fmsj4a.exe';
-  quelldatei:='J:\!WISE\sbrw435.exe';
-  quelldatei:='H:\daten.ty2\arc\wise\pe_6e00\pbupdate.exe';
-  quelldatei:='H:\daten.ty2\arc\wise\pe_pe_3000\tvbsbc3.exe';
-  quelldatei:='H:\daten.ty2\arc\wise\ne_3780\wise6upg.exe';
-  (*$ENDIF*)
+int main(int argc, char*[] argv)
+{
+	g_set_application_name("unwise - wise unpacker");
+	
+	//get_format_options(argc, argv);
+	
+	GError* error = NULL;
+	GOptionContext* context = g_option_context_new("CHANGEME!");
+	g_option_context_set_help_enabled(context, TRUE);
+	g_option_context_add_main_entries (context, entries, GETTEXT_PACKAGE);
+	if(!g_option_context_parse (context, &argc, &argv, &error))
+	{
+		g_print ("option parsing failed: %s\n", error->message);
+		g_error_free(error);
+		return 1;
+    }
+
+	int input_fd = open(wise_archive, "r");
+#warning error handling missing
+	GIOChannel* input = g_io_channel_unix_new(input_fd);
+/*
   d1:=New(pBufStream,Init(quelldatei,stOpenRead,buffersize));
   if d1^.Status<>stOK then
     begin
@@ -745,18 +907,22 @@ begin
 
   d1_laenge:=d1^.GetSize;
   archivende:=d1_laenge;
-
+*/
+  
+	g_print("Search for start");
+/*
   Write(textz_Suche_Anfang^);
-  zielverzeichnis:=FExpand(ParamStr(2));
-  if zielverzeichnis[Length(zielverzeichnis)] in ['\','/'] then
-    Dec(zielverzeichnis[0]);
-
-  if ParamStr(3)='/DEBUG' then
-    debugmodus:=true;
-
+*/
+	
+	skip_to_data(input);
+/*
   springe_zu_den_daten;
+*/
+	
   d1_Seek(datenbasis+datenstart);
+/*
   WriteLn;
+*/
 
   ausgewaehltes_format:=0;
   for zaehler:=Low(bekannte_formate^) to {High(bekannte_formate)} zahl_bekannte_formate do
@@ -875,7 +1041,7 @@ begin
 
   (* Hauptschleife des Entpackens *)
   WriteLn(textz_Entpacke_Dateien^);
-  repeat (*ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ*)
+  repeat (**)
 
     rate_naechstes_blockende(d1_GetPos);
     Write(Int2Hex(d1_GetPos,8));
@@ -968,7 +1134,7 @@ begin
     suche_informationsdatei;
     berechne_aktuelle_rechnugsnull;
 
-  until d1_GetPos>=archivende; (*ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ*)
+  until d1_GetPos>=archivende; (**)
 
   d1^.Done;
 
@@ -1161,8 +1327,8 @@ begin
 
   WriteLn(bat);
   WriteLn(bat,'REM');
-  (* auf Wechselbaren Datentr„gern fragt OS/2
-    sonst nach dem Datentr„ger mit der BAT/CMD-Datei *)
+  (* auf Wechselbaren DatentrÛ„gern fragt OS/2
+    sonst nach dem Datentrger mit der BAT/CMD-Datei *)
   (*WriteLn(bat,'IF [%1]==[] DEL %0');*)
   Close(bat);
   Close(log);
