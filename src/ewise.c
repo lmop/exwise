@@ -110,6 +110,68 @@ struct segment_table
     guint16 min_alloc_bytes;
 };
 
+struct ImageFileHeader
+{
+	guint16 machine;
+	guint16 section_count;
+	guint32 time_date_stamp;
+	guint32 pointer_to_symbol_table;
+	guint32 symbol_count;
+	guint16 optional_header_size;
+	guint16 characteristics;
+};
+
+struct ImageOptionalHeader
+{
+	guint16 magic;
+	guint8 major_linker_version;
+	guint8 minor_linker_version;
+	guint32 size_of_code;
+	guint32 size_of_initialized_data;
+	guint32 size_of_uninitialized_data;
+	guint32 address_of_entry_point;
+	guint32 base_of_code;
+	guint32 base_of_data;
+	guint32 image_base;
+	guint32 section_alignment;
+	guint32 file_alignment;
+	guint16 major_operating_system_version;
+	guint16 minor_operating_system_version;
+	guint16 major_image_version;
+	guint16 minor_image_version;
+	guint16 major_subsystem_version;
+	guint16 minor_subsystem_version;
+	guint32 win32_version_value;
+	guint32 size_of_image;
+	guint32 size_of_headers;
+	guint32 checksum;
+	guint16 subsystem;
+	guint16 dll_characteristics;
+	guint32 size_of_stack_reserve;
+	guint32 size_of_stack_commit;
+	guint32 size_of_heap_reserve;
+	guint32 size_of_heap_commit;
+	guint32 loader_flags;
+	guint32 number_of_rva_and_sizes;
+};
+
+struct ImageSectionHeader
+{
+	guint8 name[8];
+	union {
+		guint32 physical_address;
+		guint32 virtual_size;
+	} misc;
+	guint32 virtual_address;
+	guint32 size_of_raw_data;
+	guint32 pointer_to_raw_data;
+	guint32 pointer_to_relocations;
+	guint32 pointer_to_linenumbers;
+	guint16 number_of_relocations;
+	guint16 number_of_linenumbers;
+	guint32 characteristics;
+};
+
 /*
 const
   datum='1999.12.19..2002.07.01';
@@ -170,6 +232,7 @@ const
 
 enum exe_type
 {
+	UNKNOWN,
 	NE,
 	PE
 };
@@ -283,7 +346,7 @@ function dname(const n:longint):string;
 /*
 procedure uebergehe_ne;
 */
-GError* skip_ne(GIOChannel* input, gint64* pBase, gint64* pStart)
+GError* skip_ne(GIOChannel* input, enum exe_type* type, gint64* pBase, gint64* pStart, guint16* p_setup_code_bytes, guint16* p_setup_data_bytes)
 {
 /*
     var
@@ -346,7 +409,7 @@ GError* skip_ne(GIOChannel* input, gint64* pBase, gint64* pStart)
 /*
       setup_programmcode_laenge:=codeseginfo.ns_cbseg;
 */
-	setup_code_bytes = segment.segment_bytes;
+	*p_setup_code_bytes = segment.segment_bytes;
 /*
       d1_Seek(datenbasis+datenstart+ne.ne_segtab+2*SizeOf(new_seg));
 */
@@ -364,7 +427,7 @@ GError* skip_ne(GIOChannel* input, gint64* pBase, gint64* pStart)
 /*
       setup_programmdaten_laenge:=datenseginfo.ns_cbseg;
 */
-	setup_data_bytes = segment.segment_bytes;
+	*p_setup_data_bytes = segment.segment_bytes;
 
 /*
       (* Annahme: es sind Resourcen vorhanden und sie sind am Ende.. *)
@@ -405,13 +468,16 @@ GError* skip_ne(GIOChannel* input, gint64* pBase, gint64* pStart)
       datenstart:=o;
 */
 	*pStart = o;
+/*
       gefundene_exe:=exe_ne;
+*/
+	*type = NE;
 }
 
 /*
 procedure uebergehe_pe;
 */
-GError* skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart)
+GError* skip_pe(GIOChannel* input, enum exe_type* type, gint64* pBase, gint64* pStart, guint16* p_setup_code_bytes, guint16* p_setup_data_bytes)
 {
 /*
     var
@@ -427,6 +493,7 @@ GError* skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart)
 	GError* error = NULL;
 	gint64 base = *pBase;
 	gint64 start = *pStart;
+	gsize bytes_read = 0;
 /*
       d1_Seek(datenbasis+datenstart+4);
 */
@@ -441,9 +508,10 @@ GError* skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart)
 /*
       d1_Read(im,SizeOf(im));
 */
+	struct ImageFileHeader file_header;
 	status = g_io_channel_read_chars
 	(
-		input, ???, ????, &bytes_read, &error
+		input, &file_header, sizeof(file_header), &bytes_read, &error
 	);
 		
 	if(error)
@@ -451,10 +519,10 @@ GError* skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart)
 /*
       d1_Read(imo,SizeOf(imo));
 */
-
+	struct ImageOptionalHeader optional_header;
 	status = g_io_channel_read_chars
 	(
-		input, ???, ????, &bytes_read, &error
+		input, &optional_header, sizeof(optional_header), &bytes_read, &error
 	);
 		
 	if(error)
@@ -466,7 +534,7 @@ GError* skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart)
 	//read information about the first sector (.text)
   	status = g_io_channel_seek_position
 	(
-		input, base + start + 4 + ???, G_SEEK_SET, &error
+		input, base + start + 4 + sizeof(file_header) + file_header.optional_header_size, G_SEEK_SET, &error
 	);
 	
 	if(error)
@@ -474,33 +542,39 @@ GError* skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart)
 /*
       d1_Read(sek,SizeOf(sek));
 */
+	struct ImageSectionHeader section_header;
 	status = g_io_channel_read_chars
 	(
-		input, ???, ????, &bytes_read, &error
+		input, &section_header, sizeof(section_header), &bytes_read, &error
 	);
 	
 	if(error)
 		return error;
 /*
       setup_programmcode_laenge:=sek.Misc.VirtualSize;
-
+*/
+	*p_setup_code_bytes = section_header.misc.virtual_size;
+/*	
       d1_Seek(datenbasis+datenstart+4+SizeOf(im)+im.SizeOfOptionalHeader+2*SizeOf(sek));
 */
   	status = g_io_channel_seek_position
 	(
-		input, base + start + 4 + ???, G_SEEK_SET, &error
+		input, base + start + 4 + sizeof(file_header) + file_header.optional_header_size + 2 * sizeof(section_header), G_SEEK_SET, &error
 	);
 	
 	if(error)
 		return error;
 /*
       d1_Read(sek,SizeOf(sek));
-      setup_programmdaten_laenge:=sek.Misc.VirtualSize;
 */
 	status = g_io_channel_read_chars
 	(
-		input, ???, ????, &bytes_read, &error
+		input, &section_header, sizeof(section_header), &bytes_read, &error
 	);
+/*
+      setup_programmdaten_laenge:=sek.Misc.VirtualSize;
+*/
+	*p_setup_data_bytes = section_header.misc.virtual_size;
 	
 	if(error)
 		return error;
@@ -508,19 +582,22 @@ GError* skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart)
       (* Informationen ၁ber letzte Sektion (Resource..) einlesen *)
 */
 		//read information about last section (Resource..)
+/*
       resource_sektion:=im.NumberOfSections-1;
+*/
+	guint16 resource_section = file_header.section_count - 1;
 /*
       if (im.Characteristics and (1 shl 0))=0 then
         Dec(resource_sektion); (* relo *)
 */
-	if(!get_characteristics(im))
+	if(!file_header.characteristics)
 		resource_section--;
 /*
       d1_Seek(datenbasis+datenstart+4+SizeOf(im)+im.SizeOfOptionalHeader+resource_sektion*SizeOf(sek));
 */
 	status = g_io_channel_seek_position
 	(
-		input, base + start + 4 + ???, G_SEEK_SET, &error
+		input, base + start + 4 + sizeof(file_header) + file_header.optional_header_size + resource_section * sizeof(section_header), G_SEEK_SET, &error
 	);
 	
 	if(error)
@@ -530,7 +607,7 @@ GError* skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart)
 */
 	status = g_io_channel_read_chars
 	(
-		input, ???, ????, &bytes_read, &error
+		input, &section_header, sizeof(section_header), &bytes_read, &error
 	);
 		
 	if(error)
@@ -566,7 +643,7 @@ GError* skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart)
 */
 	status = g_io_channel_seek_position
 	(
-		input, base + start + 4 + ???, G_SEEK_SET, &error
+		input, base + start + 4 + sizeof(file_header) + file_header.optional_header_size + (file_header.section_count - 1) * sizeof(section_header), G_SEEK_SET, &error
 	);
 	
 	if(error)
@@ -576,7 +653,7 @@ GError* skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart)
 */
 	status = g_io_channel_read_chars
 	(
-		input, ???, ????, &bytes_read, &error
+		input, &section_header, sizeof(section_header), &bytes_read, &error
 	);
 	
 	if(error)
@@ -584,13 +661,16 @@ GError* skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart)
 /*
       datenstart:=sek.PointerToRawData+sek.SizeOfRawData;
 */
-	start =; 
+	start = section_header.pointer_to_raw_data + section_header.size_of_raw_data;
+/*
       gefundene_exe:=exe_pe;
+*/
+	*type = PE;
 }
 /*
 procedure springe_zu_den_daten;
 */
-GError* skip_to_data(GIOChannel* input, gint64* pBase, gint64* pStart)
+GError* skip_to_data(GIOChannel* input, enum exe_type* type, gint64* pBase, gint64* pStart, guint16* p_setup_code_bytes, guint16* p_setup_data_bytes)
 {
 /*
   var
@@ -602,8 +682,9 @@ GError* skip_to_data(GIOChannel* input, gint64* pBase, gint64* pStart)
 */
 	gint64 base = *pBase;
 	gint64 start = *pStart;
-	
+/*	
     setup_programmcode_laenge:=0;
+*/
 	gboolean search_finished;
 	
 	GError* error = NULL; 
@@ -620,8 +701,10 @@ GError* skip_to_data(GIOChannel* input, gint64* pBase, gint64* pStart)
 */
 		base += start;
 		start = 0;
-
+/*
       gefundene_exe:=exe_unbekannt;
+*/
+		*type = UNKNOWN;
 /*
       d1_Seek(datenbasis+datenstart);
 */
@@ -694,10 +777,10 @@ GError* skip_to_data(GIOChannel* input, gint64* pBase, gint64* pStart)
 		switch(header.signature)
 		{
 			case NE:
-      			skip_ne(input, &base, &start);
+      			skip_ne(input, type, &base, &start, p_setup_code_bytes, p_setup_data_bytes);
       			break;
       		case PE:
-      			skip_pe(input, &base, &start);
+      			skip_pe(input, type, &base, &start, p_setup_code_bytes, p_setup_data_bytes);
       			break;
       		default:
       		{
@@ -1104,7 +1187,10 @@ int main(int argc, char* argv[])
 */
 	gint64 base = 0;
 	gint64 start = 0;
-	skip_to_data(input, &base, &start);
+	guint16 setup_code_bytes = 0;
+	guint16 setup_data_bytes = 0;
+	enum exe_type type;
+	error = skip_to_data(input, &type, &base, &start, &setup_code_bytes, &setup_data_bytes);
 /*
   springe_zu_den_daten;
 */
