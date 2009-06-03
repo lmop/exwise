@@ -110,6 +110,32 @@ struct segment_table
     guint16 min_alloc_bytes;
 };
 
+/* Resource type information block */
+struct rsrc_typeinfo
+{
+    unsigned short rt_id;
+    unsigned short rt_nres;
+    long rt_proc;
+};
+
+/* Resource name information block */
+struct rsrc_nameinfo
+{
+    /* The following two fields must be shifted left by the value of  */
+    /* the rs_align field to compute their actual value.  This allows */
+    /* resources to be larger than 64k, but they do not need to be    */
+    /* aligned on 512 byte boundaries, the way segments are           */
+    unsigned short rn_offset;   /* file offset to resource data */
+    unsigned short rn_length;   /* length of resource data */
+    unsigned short rn_flags;    /* resource flags */
+    unsigned short rn_id;       /* resource name id */
+    unsigned short rn_handle;   /* If loaded, then global handle */
+    unsigned short rn_usage;    /* Initially zero.  Number of times */
+                                /* the handle for this resource has */
+                                /* been given out */
+};
+
+
 struct ImageFileHeader
 {
 	guint16 machine;
@@ -436,34 +462,69 @@ GError* skip_ne(GIOChannel* input, enum exe_type* type, gint64* pBase, gint64* p
 /*
       d1_Seek(datenbasis+datenstart+ne.ne_rsrctab);
 */
+	gint64 position = base + start + header.resource_table_offset;  
 	status = g_io_channel_seek_position
 	(
-		input, base + start + header.resource_table_offset, G_SEEK_SET,	&error
+		input, position, G_SEEK_SET,	&error
 	);
 /*
       d1_Read(rs_align,SizeOf(rs_align));
 */
+	guint16 align;
 	status = g_io_channel_read_chars
 	(
-		input, ???, ????, &bytes_read, &error
+		input, &align, sizeof(align), &bytes_read, &error
 	);
 /*
       (* ne.ne_cres ist 0 also mu geschummelt werden *)
 */
+	position += bytes_read;
 
 	//since ne.ne_cs is 0 we have to cheat
+/*
       while d1_GetPos+SizeOf(rs_type)<=datenbasis+datenstart+ne.ne_restab do
-        begin
+*/
+	
+	while(position + sizeof() <= base + start + header.resident_table_offset)
+	{
+/*
           d1_Read(rs_type,SizeOf(rs_type));
+*/
+		struct rsrc_typeinfo rs_type;
+		status = g_io_channel_read_chars
+		(		
+			input, &rs_type, sizeof(rs_type), &bytes_read, &error
+		);
+		
+		if(error)
+			return error;
+/*
           for z2:=1 to rs_type.rt_nres do
-            begin
+*/
+		for(int counter = 1; counter <= rs_type.rt_nres; counter++)
+		{
+/*
               d1_Read(rs_name,SizeOf(rs_name));
+*/
+			struct rsrc_nameinfo rs_name;
+			status = g_io_channel_read_chars
+			(		
+				input, &rs_name, sizeof(rs_name), &bytes_read, &error
+			);
+/*
               a:=rs_name.rn_offset shl rs_align
                 +rs_name.rn_length shl rs_align;
-              if o<a then
+*/
+			gint64 a = rs_name.rn_offset << align + rs_name.rn_length << align;
+/*			                
+              if o<a then              
                 o:=a;
-            end;
-        end;
+*/
+
+			if(o < a)
+				o = a; 
+		}
+	}
 /*
       datenstart:=o;
 */
