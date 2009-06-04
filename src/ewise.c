@@ -1342,7 +1342,7 @@ int main(int argc, char* argv[])
 	gint64 start = 0;
 	
 	wise_archive wise;
-	wise.type = UNKOWN_EXE;
+	wise.type = UNKNOWN_EXE;
 	error = skip_to_data(input, &base, &start, &wise);
 /*
   springe_zu_den_daten;
