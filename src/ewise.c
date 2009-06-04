@@ -425,7 +425,7 @@ gboolean skip_ne(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 	
 	status = g_io_channel_read_chars
 	(
-		input, &header, sizeof(header), &bytes_read, error
+		input, (gchar *)&header, sizeof(header), &bytes_read, error
 	);
 		
 	if(*error)
@@ -450,7 +450,7 @@ gboolean skip_ne(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 	segment_table segment;
 	status = g_io_channel_read_chars
 	(
-		input, &segment, sizeof(segment), &bytes_read, error
+		input, (gchar *)&segment, sizeof(segment), &bytes_read, error
 	);
 	
 	if(*error)
@@ -475,7 +475,7 @@ gboolean skip_ne(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 */
 	status = g_io_channel_read_chars
 	(
-		input, &segment, sizeof(segment), &bytes_read, error
+		input, (gchar *)&segment, sizeof(segment), &bytes_read, error
 	);
 	
 	if(*error)
@@ -506,7 +506,7 @@ gboolean skip_ne(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 	guint16 align;
 	status = g_io_channel_read_chars
 	(
-		input, &align, sizeof(align), &bytes_read, error
+		input, (gchar *)&align, sizeof(align), &bytes_read, error
 	);
 	
 	if(*error)
@@ -529,7 +529,7 @@ gboolean skip_ne(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 */
 		status = g_io_channel_read_chars
 		(		
-			input, &rs_type, sizeof(rs_type), &bytes_read, error
+			input, (gchar *)&rs_type, sizeof(rs_type), &bytes_read, error
 		);
 		
 		if(*error)
@@ -545,7 +545,7 @@ gboolean skip_ne(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 			rsrc_nameinfo rs_name;
 			status = g_io_channel_read_chars
 			(		
-				input, &rs_name, sizeof(rs_name), &bytes_read, error
+				input, (gchar *)&rs_name, sizeof(rs_name), &bytes_read, error
 			);
 			
 			if(*error)
@@ -608,7 +608,7 @@ gboolean skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 	ImageFileHeader file_header;
 	status = g_io_channel_read_chars
 	(
-		input, &file_header, sizeof(file_header), &bytes_read, error
+		input, (gchar *)&file_header, sizeof(file_header), &bytes_read, error
 	);
 		
 	if(*error)
@@ -619,7 +619,7 @@ gboolean skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 	ImageOptionalHeader optional_header;
 	status = g_io_channel_read_chars
 	(
-		input, &optional_header, sizeof(optional_header), &bytes_read, error
+		input, (gchar *)&optional_header, sizeof(optional_header), &bytes_read, error
 	);
 		
 	if(*error)
@@ -642,7 +642,7 @@ gboolean skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 	struct ImageSectionHeader section_header;
 	status = g_io_channel_read_chars
 	(
-		input, &section_header, sizeof(section_header), &bytes_read, error
+		input, (gchar *)&section_header, sizeof(section_header), &bytes_read, error
 	);
 	
 	if(*error)
@@ -666,7 +666,7 @@ gboolean skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 */
 	status = g_io_channel_read_chars
 	(
-		input, &section_header, sizeof(section_header), &bytes_read, error
+		input, (gchar *)&section_header, sizeof(section_header), &bytes_read, error
 	);
 	
 	if(*error)
@@ -705,7 +705,7 @@ gboolean skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 */
 	status = g_io_channel_read_chars
 	(
-		input, &section_header, sizeof(section_header), &bytes_read, error
+		input, (gchar *)&section_header, sizeof(section_header), &bytes_read, error
 	);
 		
 	if(*error)
@@ -736,7 +736,7 @@ gboolean skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 */
 		status = g_io_channel_read_chars
 		(
-			input, raw_data, sizeof(raw_data), &bytes_read, error
+			input, (gchar *)raw_data, sizeof(raw_data), &bytes_read, error
 		);
 		
 		if(*error)
@@ -795,7 +795,7 @@ gboolean skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 */
 	status = g_io_channel_read_chars
 	(
-		input, &section_header, sizeof(section_header), &bytes_read, error
+		input, (gchar *)&section_header, sizeof(section_header), &bytes_read, error
 	);
 	
 	if(*error)
@@ -861,7 +861,7 @@ GError* skip_to_data(GIOChannel* input, gint64* pBase, gint64* pStart, wise_arch
 		
 		status = g_io_channel_read_chars
 		(
-			input, &header, sizeof(header), &bytes_read, &error
+			input, (gchar *)&header, sizeof(header), &bytes_read, &error
 		);
 		
 		if(error)
@@ -898,7 +898,7 @@ GError* skip_to_data(GIOChannel* input, gint64* pBase, gint64* pStart, wise_arch
 */
           	status = g_io_channel_read_chars
 			(
-				input, &header, sizeof(header), &bytes_read, &error
+				input, (gchar *)&header, sizeof(header), &bytes_read, &error
 			);
 			
 			if(error)
