@@ -1284,11 +1284,11 @@ static gboolean enable_debug(const gchar *option_name, const gchar* value, gpoin
 
 static gchar* unpack_directory = NULL;
 static gchar** files_to_extract = NULL;
-static gchar* wise_archive = NULL;
+static gchar* wise_archive_name = NULL;
 
 static GOptionEntry entries[] =
 {
-	{ "",                 '\0', 0,                          G_OPTION_ARG_FILENAME,       &wise_archive,     "Wise archive to unpack",   NULL},
+	{ "",                 '\0', 0,                          G_OPTION_ARG_FILENAME,       &wise_archive_name,     "Wise archive to unpack",   NULL},
 	{ "unpack_directory", 'd',  G_OPTION_FLAG_OPTIONAL_ARG, G_OPTION_ARG_STRING,         &unpack_directory, "Place to unpack files to", NULL},
 	{ "debug",            '\0', G_OPTION_FLAG_NO_ARG,       G_OPTION_ARG_CALLBACK,       enable_debug,      "Enable debug mode",        NULL},
 	{ "files",            '\0', 0,                          G_OPTION_ARG_FILENAME_ARRAY, &files_to_extract, "Narrows files to debug",   NULL}, 
@@ -1313,7 +1313,7 @@ int main(int argc, char* argv[])
 		return 1;
     }
 
-	int input_fd = open(wise_archive, 0, O_RDONLY);
+	int input_fd = open(wise_archive_name, 0, O_RDONLY);
 	
 	if(input_fd == -1)
 	{
