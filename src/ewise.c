@@ -485,12 +485,12 @@ GError* skip_ne(GIOChannel* input, enum exe_type* type, gint64* pBase, gint64* p
       while d1_GetPos+SizeOf(rs_type)<=datenbasis+datenstart+ne.ne_restab do
 */
 	
-	while(position + sizeof() <= base + start + header.resident_table_offset)
+	struct rsrc_typeinfo rs_type;
+	while(position + sizeof(rs_type) <= base + start + header.resident_table_offset)
 	{
 /*
           d1_Read(rs_type,SizeOf(rs_type));
 */
-		struct rsrc_typeinfo rs_type;
 		status = g_io_channel_read_chars
 		(		
 			input, &rs_type, sizeof(rs_type), &bytes_read, &error
