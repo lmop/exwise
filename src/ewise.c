@@ -777,6 +777,7 @@ gboolean skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 				wise->end = base + section_header.pointer_to_raw_data + optional_header.data_directory[2].size;
 				break;
 			}
+	    }
 	}
 
 /*
