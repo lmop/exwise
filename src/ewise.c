@@ -750,7 +750,7 @@ gboolean skip_pe(GIOChannel* input, gint64* pBase, gint64* pStart, wise_archive*
 /*
             with exe_hdr_z(@r_bereich[f])^ do
 */
-            exe_header* pHeader = raw_data + counter;
+            exe_header* pHeader = (exe_header *)(raw_data + counter);
             
 /*
               if ((e_magic=ExeId) or (e_magic=$4d5a))
